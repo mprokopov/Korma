@@ -187,16 +187,25 @@
           :subname     (str "@" host ":" port)}
          (dissoc opts :host :port)))
 
+(defn- parse-mysql-extra
+  "parse extra mysql map and returns string could be appended to :subname
+  in format '?key1=value1&key2=value2 ...'"
+  [m]
+  (when m
+    (->> (map (fn [[k v]] (str (name k) "=" v)) m)
+         (clojure.string/join "&")
+         (str "?"))))
+
 (defn mysql
   "Create a database specification for a mysql database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port.
   Delimiters are automatically set to \"`\"."
-  [{:keys [host port db]
+  [{:keys [host port db extra]
     :or {host "localhost", port 3306, db ""}
     :as opts}]
   (merge {:subprotocol "mysql"
-          :subname     (str "//" host ":" port "/" db)}
-         (dissoc opts :host :port :db)))
+          :subname     (str "//" host ":" port "/" db (parse-mysql-extra extra))}
+         (dissoc opts :host :port :db :extra)))
 
 (defn vertica
   "Create a database specification for a vertica database. Opts should include keys
