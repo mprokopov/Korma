@@ -149,19 +149,28 @@
           :make-pool? make-pool?}
          (dissoc opts :host :port)))
 
+(defn- parse-mysql-extra
+  "parse extra mysql map and returns string could be appended to :subname
+  in format '?key1=value1&key2=value2 ...'"
+  [m]
+  (when m
+    (->> (map (fn [[k v]] (str (name k) "=" v)) m)
+         (clojure.string/join "&")
+         (str "?"))))
+
 (defn mysql
   "Create a database specification for a mysql database. Opts should include keys
   for :db, :user, and :password. You can also optionally set host and port.
   Delimiters are automatically set to \"`\"."
-  [{:keys [host port db make-pool?]
-    :or {host "localhost", port 3306, db "", make-pool? true}
+  [{:keys [host port db make-pool? extra]
+    :or {host "localhost", port 3306, db "", make-pool? true, extra nil}
     :as opts}]
   (merge {:classname "com.mysql.jdbc.Driver" ; must be in classpath
           :subprotocol "mysql"
-          :subname (str "//" host ":" port "/" db)
+          :subname (str "//" host ":" port "/" db (parse-mysql-extra extra))
           :delimiters "`"
           :make-pool? make-pool?}
-         (dissoc opts :host :port :db)))
+         (dissoc opts :host :port :db :extra)))
 
 (defn vertica
   "Create a database specification for a vertica database. Opts should include keys
